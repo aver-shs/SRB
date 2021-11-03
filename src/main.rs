@@ -33,7 +33,7 @@ impl TypeMapKey for ShardManagerContainer {
 ////////////////////
 
 #[group]
-#[commands(ping)]
+#[commands(ping, quit)]
 struct General;   
 
 ////////////////////
@@ -45,26 +45,11 @@ impl EventHandler for Handler {}
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().expect("Failed to load .env file");
-    let framework = StandardFramework::new()
-        .configure(|c| c.prefix("~")) // set the bot's prefix to "~"
-        .group(&GENERAL_GROUP)
-        .help(&THE_HELP);
 
     // Login with a bot token from the environment
     //let token = env::var("DISCORD_TOKEN").expect("token");
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let http = Http::new_with_token(&token);
-    let mut client = Client::builder(token)
-        .event_handler(Handler)
-        .framework(framework)
-        .await
-        .expect("Error creating client");
-    {
-        let mut data = client.data.write().await;
-        data.insert::<ShardManagerContainer>(client.shard_manager.clone());
-    }
-    let shard_manager = client.shard_manager.clone();
-
     let (_owners, _bot_id) = match http.get_current_application_info().await {
         Ok(info) => {
             let mut _owners = HashSet::new();
@@ -74,6 +59,17 @@ async fn main() {
         },
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
+    let framework = StandardFramework::new().configure(|c| c.owners(_owners).prefix("~")).group(&GENERAL_GROUP).help(&THE_HELP);
+    let mut client = Client::builder(token)
+        .framework(framework)
+        .event_handler(Handler)
+        .await
+        .expect("Error creating client");
+    {
+        let mut data = client.data.write().await;
+        data.insert::<ShardManagerContainer>(client.shard_manager.clone());
+    }
+    let shard_manager = client.shard_manager.clone();
 
     tokio::spawn(async move {
         tokio::signal::ctrl_c().await.expect("Could not register ctrl+c handler");
