@@ -5,3 +5,6 @@
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://opensource.org/)
 
 Some Rust Bot. A random project im doing for school
+
+## Wiki
+[Click here for the wiki](https://github.com/aver-shs/SRB/wiki)
